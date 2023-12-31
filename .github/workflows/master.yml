@@ -33,7 +33,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: npm install
-      - run: npm run build-storybook
+      - run: npm run build-storybook -- -o ./storybook-static/latest
       - run: ls
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -41,9 +41,9 @@ jobs:
           name: build-artifact
           path: |
             storybook-static
-  # DEPLOY STORYBOOK ARTIFACTS TO S3
+  # DEPLOY STORYBOOK ARTIFACTS TO GITHUB PAGES
   deploy:
-    needs: build
+    needs: [build, get-uuid]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -63,6 +63,9 @@ jobs:
         with:
           # upload storybook-static folder
           path: "./storybook-static"
+          retention-days: 1
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: OUTPUT BUILD ID
+        run: echo "https://virapyan.github.io/csds-gpages-poc/latest"
