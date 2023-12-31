@@ -1,11 +1,7 @@
 # CSDS Storybook deployment: Proof of Concept
 
 This project is for demo purposes only.
-Building, deploying and running Storybook based CSDS on local and AWS env.
-
-## The latests master build can be found under:
-
-https://csds.sanahin.net/latest
+Building, deploying and running Storybook based CSDS to GithubPages.
 
 ## Available Scripts
 
