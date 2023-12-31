@@ -99,33 +99,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
       - name: OUTPUT BUILD ID
-        run: echo "${{needs.get-uuid.outputs.uuid}}"
-  # # DEPLOY STORYBOOK ARTIFACTS TO S3
-  # deploy:
-  #   needs: [build, get-uuid]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #     - name: Create folder
-  #       run: |
-  #         mkdir -p storybook-static
-  #     - name: Download build artifact
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: build-artifact
-  #         path: storybook-static
-  #     - name: Setup AWS CLI
-  #       uses: aws-actions/configure-aws-credentials@v4
-  #       with:
-  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-  #         aws-region: ap-southeast-2
-  #     - name: Sync files to S3 bucket
-  #       run: |
-  #         aws s3 sync storybook-static s3://csds.sanahin.net/${{needs.get-uuid.outputs.uuid}} --delete
-  #     - name: Invalidate Cloudfront Cache
-  #       run: |
-  #         aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFRONT_CSDS_DISTRIBUTION_ID }} --paths "/${{needs.get-uuid.outputs.uuid}}*"
-  #     - name: OUTPUT TEST URL
-  #       run: echo "https://csds.sanahin.net/${{needs.get-uuid.outputs.uuid}}"
+        run: echo "https://virapyan.github.io/csds-gpages-poc/${{needs.get-uuid.outputs.uuid}}"
