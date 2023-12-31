@@ -1,0 +1,98 @@
+name: Publish Storybook PR
+on:
+  pull_request:
+    types: [opened, reopened]
+    branches-ignore:
+      - master
+  push:
+    branches-ignore:
+      - master
+jobs:
+  # INSTALL DEPS
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - run: npm ci
+  # BUILD STORYBOOK ARTIFACTS
+  build:
+    needs: install
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm install
+      - run: npm run build-storybook
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifact
+          path: |
+            storybook-static
+  # ACQUIRE CURRENT BRANCH
+  branch:
+    runs-on: ubuntu-latest
+    outputs:
+      current: ${{ steps.vars.outputs.short_ref }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set output
+        id: vars
+        run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
+      - name: Check output
+        run: echo ${{ steps.vars.outputs.short_ref }}
+  # GENERATE UUID BASED ON BRANCH NAME
+  get-uuid:
+    needs: branch
+    runs-on: ubuntu-latest
+    name: generate uuid
+    outputs:
+      uuid: ${{ steps.generate-uuid.outputs.uuid }}
+    steps:
+      - name: set uuid
+        id: generate-uuid
+        uses: filipstefansson/uuid-action@v1
+        with:
+          name: ${{ needs.branch.outputs.current }}
+      # use the output from the `generate-uuid` step
+      - name: get uuid
+        run: echo "uuid is ${{ steps.generate-uuid.outputs.uuid }}"
+  # # DEPLOY STORYBOOK ARTIFACTS TO S3
+  # deploy:
+  #   needs: [build, get-uuid]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #     - name: Create folder
+  #       run: |
+  #         mkdir -p storybook-static
+  #     - name: Download build artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: build-artifact
+  #         path: storybook-static
+  #     - name: Setup AWS CLI
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws-region: ap-southeast-2
+  #     - name: Sync files to S3 bucket
+  #       run: |
+  #         aws s3 sync storybook-static s3://csds.sanahin.net/${{needs.get-uuid.outputs.uuid}} --delete
+  #     - name: Invalidate Cloudfront Cache
+  #       run: |
+  #         aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFRONT_CSDS_DISTRIBUTION_ID }} --paths "/${{needs.get-uuid.outputs.uuid}}*"
+  #     - name: OUTPUT TEST URL
+  #       run: echo "https://csds.sanahin.net/${{needs.get-uuid.outputs.uuid}}"
