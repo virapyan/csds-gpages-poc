@@ -23,27 +23,6 @@ jobs:
         with:
           node-version: 18
       - run: npm ci
-  # BUILD STORYBOOK ARTIFACTS
-  build:
-    needs: install
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [18.x]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use node ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-      - run: npm install
-      - run: npm run build-storybook
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifact
-          path: |
-            storybook-static
   # ACQUIRE CURRENT BRANCH
   branch:
     runs-on: ubuntu-latest
@@ -72,6 +51,27 @@ jobs:
       # use the output from the `generate-uuid` step
       - name: get uuid
         run: echo "uuid is ${{ steps.generate-uuid.outputs.uuid }}"
+  # BUILD STORYBOOK ARTIFACTS
+  build:
+    needs: [install, get-uuid]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm install
+      - run: npm run build-storybook -- -o ./storybook-static/${{needs.get-uuid.outputs.uuid}}
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifact
+          path: |
+            storybook-static
   # DEPLOY STORYBOOK ARTIFACTS TO GITHUB PAGES
   deploy:
     needs: build
@@ -94,9 +94,12 @@ jobs:
         with:
           # upload storybook-static folder
           path: "./storybook-static"
+          retention-days: 1
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: OUTPUT BUILD ID
+        run: echo "${{needs.get-uuid.outputs.uuid}}"
   # # DEPLOY STORYBOOK ARTIFACTS TO S3
   # deploy:
   #   needs: [build, get-uuid]
