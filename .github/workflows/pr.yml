@@ -7,6 +7,11 @@ on:
   push:
     branches-ignore:
       - master
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 jobs:
   # INSTALL DEPS
   install:
@@ -67,6 +72,31 @@ jobs:
       # use the output from the `generate-uuid` step
       - name: get uuid
         run: echo "uuid is ${{ steps.generate-uuid.outputs.uuid }}"
+  # DEPLOY STORYBOOK ARTIFACTS TO GITHUB PAGES
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Create folder
+        run: |
+          mkdir -p storybook-static
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifact
+          path: storybook-static
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # upload storybook-static folder
+          path: "./storybook-static"
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
   # # DEPLOY STORYBOOK ARTIFACTS TO S3
   # deploy:
   #   needs: [build, get-uuid]

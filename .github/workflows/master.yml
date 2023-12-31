@@ -41,7 +41,7 @@ jobs:
           name: build-artifact
           path: |
             storybook-static
-  # DEPLOY STORYBOOK ARTIFACTS TO S3
+  # DEPLOY STORYBOOK ARTIFACTS TO GITHUB PAGES
   deploy:
     needs: build
     runs-on: ubuntu-latest
