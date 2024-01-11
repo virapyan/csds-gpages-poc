@@ -89,11 +89,11 @@ jobs:
           name: build-artifact
           path: storybook-static
       - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@v4
+        uses: JamesIves/github-pages-deploy-action@3.7.1
         with:
           BRANCH: gh-pages # The branch the action should deploy to.
           FOLDER: storybook-static # The folder the action should deploy.
-          TARGET_FOLDER: ${{needs.get-uuid.outputs.uuid}}
+          TARGET_FOLDER: version/${{needs.get-uuid.outputs.uuid}}
           CLEAN: true
 
   # deploy:
