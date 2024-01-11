@@ -57,6 +57,8 @@ jobs:
     needs: get-uuid
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - uses: bitovi/github-actions-storybook-to-github-pages@v1.0.1
         with:
           install_command: npm ci
