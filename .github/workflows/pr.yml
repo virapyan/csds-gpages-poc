@@ -83,7 +83,7 @@ jobs:
         with:
           branch: gh-pages
           folder: storybook-static
-          target-folder: v/${{needs.get-uuid.outputs.uuid}}
+          target-folder: ${{needs.get-uuid.outputs.uuid}}
           clean: true
   # deploy:
   #   needs: [build, get-uuid]
