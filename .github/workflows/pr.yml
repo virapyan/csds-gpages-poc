@@ -65,7 +65,7 @@ jobs:
             storybook-static
   # DEPLOY STORYBOOK ARTIFACTS TO GITHUB PAGES
   deploy:
-    needs: get-uuid
+    needs: [build, get-uuid]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
