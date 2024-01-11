@@ -73,6 +73,25 @@ jobs:
           path: |
             storybook-static
   # DEPLOY STORYBOOK ARTIFACTS TO GITHUB PAGES
+  deploy:
+    needs: [build, get-uuid]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Create folder
+        run: |
+          mkdir -p storybook-static
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifact
+          path: storybook-static
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: "storybook-static"
+          target-folder: ${{needs.get-uuid.outputs.uuid}}
   # deploy:
   #   needs: [build, get-uuid]
   #   runs-on: ubuntu-latest
