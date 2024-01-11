@@ -14,16 +14,6 @@ permissions:
   id-token: write
 
 jobs:
-  # INSTALL DEPS
-  install:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - run: npm ci
   # ACQUIRE CURRENT BRANCH
   branch:
     runs-on: ubuntu-latest
@@ -54,7 +44,7 @@ jobs:
         run: echo "uuid is ${{ steps.generate-uuid.outputs.uuid }}"
   # BUILD STORYBOOK ARTIFACTS
   build:
-    needs: [install, get-uuid]
+    needs: get-uuid
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -65,7 +55,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm install
+      - run: npm ci
       - run: npm run build-storybook -- -o ./storybook-static
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -75,7 +65,7 @@ jobs:
             storybook-static
   # DEPLOY STORYBOOK ARTIFACTS TO GITHUB PAGES
   deploy:
-    needs: [build, get-uuid]
+    needs: get-uuid
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -91,11 +81,10 @@ jobs:
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@3.7.1
         with:
-          BRANCH: gh-pages # The branch the action should deploy to.
-          FOLDER: storybook-static # The folder the action should deploy.
-          TARGET_FOLDER: version/${{needs.get-uuid.outputs.uuid}}
-          CLEAN: true
-          CLEAN_EXCLUDE: '["version"]'
+          branch: gh-pages
+          folder: storybook-static
+          target-folder: ${{needs.get-uuid.outputs.uuid}}
+          clean: true
 
   # deploy:
   #   needs: [build, get-uuid]
