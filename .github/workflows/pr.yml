@@ -14,15 +14,113 @@ permissions:
   id-token: write
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.build-publish.outputs.page_url }}V-7
+  # INSTALL DEPS
+  install:
     runs-on: ubuntu-latest
     steps:
-      - id: build-publish
-        uses: bitovi/github-actions-storybook-to-github-pages@v1.0.2
+      - uses: actions/checkout@v4
+      - name: Use node
+        uses: actions/setup-node@v4
         with:
-          path: storybook-static # change to your build folder
-          install_command: npm ci
-          build_command: npm run build-storybook -- -o ./storybook-static/V-7
+          node-version: 18
+      - run: npm ci
+  # ACQUIRE CURRENT BRANCH
+  branch:
+    runs-on: ubuntu-latest
+    outputs:
+      current: ${{ steps.vars.outputs.short_ref }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set output
+        id: vars
+        run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
+      - name: Check output
+        run: echo ${{ steps.vars.outputs.short_ref }}
+  # GENERATE UUID BASED ON BRANCH NAME
+  get-uuid:
+    needs: branch
+    runs-on: ubuntu-latest
+    name: generate uuid
+    outputs:
+      uuid: ${{ steps.generate-uuid.outputs.uuid }}
+    steps:
+      - name: set uuid
+        id: generate-uuid
+        uses: filipstefansson/uuid-action@v1
+        with:
+          name: ${{ needs.branch.outputs.current }}
+      # use the output from the `generate-uuid` step
+      - name: get uuid
+        run: echo "uuid is ${{ steps.generate-uuid.outputs.uuid }}"
+  # BUILD STORYBOOK ARTIFACTS
+  build:
+    needs: [install, get-uuid]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use node ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm install
+      - run: npm run build-storybook -- -o ./storybook-static
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifact
+          path: |
+            storybook-static
+  # DEPLOY STORYBOOK ARTIFACTS TO GITHUB PAGES
+  deploy:
+    needs: [build, get-uuid]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Create folder
+        run: |
+          mkdir -p storybook-static
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifact
+          path: storybook-static
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          BRANCH: gh-pages # The branch the action should deploy to.
+          FOLDER: storybook-static # The folder the action should deploy.
+          TARGET_FOLDER: version/${{needs.get-uuid.outputs.uuid}}
+          CLEAN: true # Automatically remove deleted files from the deploy branch
+          CLEAN_EXCLUDE: '["version"]'
+
+  # deploy:
+  #   needs: [build, get-uuid]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #     - name: Create folder
+  #       run: |
+  #         mkdir -p storybook-static
+  #     - name: Download build artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: build-artifact
+  #         path: storybook-static
+  #     - name: Setup Pages
+  #       uses: actions/configure-pages@v4
+  #     - name: Upload artifact
+  #       uses: actions/upload-pages-artifact@v3
+  #       with:
+  #         # upload storybook-static folder
+  #         path: "./storybook-static"
+  #         retention-days: 1
+  #     - name: Deploy to GitHub Pages
+  #       id: deployment
+  #       uses: actions/deploy-pages@v4
+  #     - name: OUTPUT BUILD ID
+  #       run: echo "https://virapyan.github.io/csds-gpages-poc/${{needs.get-uuid.outputs.uuid}}"
