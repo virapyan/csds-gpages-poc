@@ -93,9 +93,8 @@ jobs:
         with:
           BRANCH: gh-pages # The branch the action should deploy to.
           FOLDER: storybook-static # The folder the action should deploy.
-          TARGET_FOLDER: version/${{needs.get-uuid.outputs.uuid}}
-          CLEAN: true # Automatically remove deleted files from the deploy branch
-          CLEAN_EXCLUDE: '["version"]'
+          TARGET_FOLDER: ${{needs.get-uuid.outputs.uuid}}
+          CLEAN: true
 
   # deploy:
   #   needs: [build, get-uuid]
