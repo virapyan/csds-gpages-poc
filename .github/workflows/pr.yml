@@ -87,16 +87,9 @@ jobs:
         with:
           name: build-artifact
           path: storybook-static
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - uses: bitovi/github-actions-storybook-to-github-pages@v1.0.1
         with:
-          # upload storybook-static folder
-          path: "./storybook-static"
-          retention-days: 1
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-      - name: OUTPUT BUILD ID
-        run: echo "https://virapyan.github.io/csds-gpages-poc/${{needs.get-uuid.outputs.uuid}}"
+          install_command: yarn install # default: npm ci
+          build_command: yarn build-storybook # default: npm run build-storybook
+          path: storybook-static # default: dist/storybook
+          checkout: false # default: true
