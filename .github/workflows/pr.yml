@@ -17,7 +17,7 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.build-publish.outputs.page_url }}
+      url: ${{ steps.build-publish.outputs.page_url }}/V-7
     runs-on: ubuntu-latest
     steps:
       - id: build-publish
