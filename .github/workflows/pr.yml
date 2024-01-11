@@ -13,59 +13,19 @@ permissions:
   pages: write
   id-token: write
 jobs:
-  # INSTALL DEPS
-  install:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - run: npm ci
-  # ACQUIRE CURRENT BRANCH
-  branch:
-    runs-on: ubuntu-latest
-    outputs:
-      current: ${{ steps.vars.outputs.short_ref }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set output
-        id: vars
-        run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
-      - name: Check output
-        run: echo ${{ steps.vars.outputs.short_ref }}
-  # GENERATE UUID BASED ON BRANCH NAME
-  get-uuid:
-    needs: branch
-    runs-on: ubuntu-latest
-    name: generate uuid
-    outputs:
-      uuid: ${{ steps.generate-uuid.outputs.uuid }}
-    steps:
-      - name: set uuid
-        id: generate-uuid
-        uses: filipstefansson/uuid-action@v1
-        with:
-          name: ${{ needs.branch.outputs.current }}
-      # use the output from the `generate-uuid` step
-      - name: get uuid
-        run: echo "uuid is ${{ steps.generate-uuid.outputs.uuid }}"
-  # BUILD STORYBOOK ARTIFACTS
-  # DEPLOY STORYBOOK ARTIFACTS TO GITHUB PAGES
   deploy:
-    needs: get-uuid
     runs-on: ubuntu-latest
+    # Job steps
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Use node ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+      # Manual Checkout
+      - uses: actions/checkout@v3
+
+      # Set up Node
+      - uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: "16.x"
+
+      #👇 Add Storybook build and deploy to GitHub Pages as a step in the workflow
       - uses: bitovi/github-actions-storybook-to-github-pages@v1.0.1
         with:
-          install_command: npm ci
-          build_command: npm run build-storybook -- -o ./storybook-static
           path: storybook-static # default: dist/storybook
-          checkout: false # default: true
