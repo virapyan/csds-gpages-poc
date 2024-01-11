@@ -13,10 +13,6 @@ permissions:
   pages: write
   id-token: write
 
-environment:
-  name: github-pages
-  url: https://virapyan.github.io/csds-gpages-poc/tmp
-
 jobs:
   # INSTALL DEPS
   install:
@@ -92,16 +88,36 @@ jobs:
         with:
           name: build-artifact
           path: storybook-static
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          # upload storybook-static folder
-          path: "./storybook-static"
-          retention-days: 1
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-      - name: OUTPUT BUILD ID
-        run: echo "https://virapyan.github.io/csds-gpages-poc/${{needs.get-uuid.outputs.uuid}}"
+          folder: "storybook-static"
+          branch: "V-5"
+
+  # deploy:
+  #   needs: [build, get-uuid]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+  #     - name: Create folder
+  #       run: |
+  #         mkdir -p storybook-static
+  #     - name: Download build artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: build-artifact
+  #         path: storybook-static
+  #     - name: Setup Pages
+  #       uses: actions/configure-pages@v4
+  #     - name: Upload artifact
+  #       uses: actions/upload-pages-artifact@v3
+  #       with:
+  #         # upload storybook-static folder
+  #         path: "./storybook-static"
+  #         retention-days: 1
+  #     - name: Deploy to GitHub Pages
+  #       id: deployment
+  #       uses: actions/deploy-pages@v4
+  #     - name: OUTPUT BUILD ID
+  #       run: echo "https://virapyan.github.io/csds-gpages-poc/${{needs.get-uuid.outputs.uuid}}"
